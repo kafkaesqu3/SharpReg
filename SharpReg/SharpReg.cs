@@ -24,16 +24,23 @@ namespace SharpSvc
 			if ((args[0].ToUpper() == "--QUERY") && (args.Length >= 4))
 			{
 				string Computer = args[1];
+				
 				string KeyName = args[2];
+				string RegHive = KeyName.Split('\\')[0];
+				KeyName = string.Join("\\", KeyName.Split('\\').Skip(1));
+				if  (RegHive != "HKLM" && RegHive != "HKCU")
+				{
+					Console.WriteLine(String.Format("[!] Invalid hive: {0}", RegHive));
+				}
 				string ValueName = args[3];
-				if (args.Length == 5)
+				if (args.Length == 6)
 				{
 					string SearchTeam = args[4];
-					Query(Computer, KeyName, ValueName, SearchTeam);
+					Query(Computer, RegHive, KeyName, ValueName, SearchTeam);
 				}
 				else
 				{
-					Query(Computer, KeyName, ValueName, null);
+					Query(Computer, RegHive, KeyName, ValueName, null);
 				}
 			}
 			else if ((args[0].ToUpper() == "--ADD") && (args.Length == 6))
@@ -64,6 +71,7 @@ namespace SharpSvc
 			}
 		}
 
+
 		static void printUsage()
 		{
 			Console.WriteLine("\n[-] Usage: \n\t--Query <Computer|local|hostname|ip> <KeyName|SOFTWARE\\Microsoft\\Policies> <ValueName|count|all|recurse|grep|ScriptBlockLogging> <SearchTeam|Grep() Only|E.g. \"Google\">\n" +
@@ -73,18 +81,31 @@ namespace SharpSvc
 			System.Environment.Exit(1);
 		}
 
-		static void Query(string Computer, string KeyName, string ValueName, string SearchTeam)
+		static void Query(string Computer, string RegHiveName, string KeyName, string ValueName, string SearchTeam)
 		{
 			try
 			{
 				RegistryKey hive;
+				RegistryHive RegHive;
+				if (RegHiveName == "HKLM")
+				{
+					RegHive = RegistryHive.LocalMachine;
+				} else if (RegHiveName == "HKCU")
+				{
+					RegHive = RegistryHive.CurrentUser;
+				} else
+				{
+					RegHive = RegistryHive.LocalMachine;
+				}
+
+				
 				if (Computer.ToUpper() != "LOCAL")
 				{
-					hive = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, Computer, RegistryView.Default);
+					hive = RegistryKey.OpenRemoteBaseKey(RegHive, Computer, RegistryView.Default);
 				}
 				else
 				{
-					hive = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Default);
+					hive = RegistryKey.OpenBaseKey(RegHive, RegistryView.Default);
 				}
 				var key = hive.OpenSubKey(KeyName);
 				if (ValueName.ToUpper() == "COUNT")
