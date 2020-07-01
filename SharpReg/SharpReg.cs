@@ -93,7 +93,11 @@ namespace SharpSvc
 				} else if (RegHiveName == "HKCU")
 				{
 					RegHive = RegistryHive.CurrentUser;
-				} else
+				}
+				else if (RegHiveName == "HKU")
+				{
+					RegHive = RegistryHive.Users;
+				}  else
 				{
 					RegHive = RegistryHive.LocalMachine;
 				}
